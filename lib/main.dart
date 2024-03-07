@@ -53,7 +53,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 
   // 加载目录内容
   Future<void> _loadDirectory() async {
-    final List<String> directoryContents = await DirectoryLoader.loadDirectory("113.90.239.20", 21000, "alisonjoe", "Homeisu&me", "./");
+    final List<String> directoryContents = await DirectoryLoader.loadDirectory("./");
     setState(() {
       _directoryContents = directoryContents;
     });

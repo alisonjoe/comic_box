@@ -1,99 +1,48 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:ftpconnect/ftpconnect.dart';
 
 class DirectoryLoader {
-  static Socket? socket; // 在类的作用域内声明套接字变量
+  final FTPConnect _ftpConnect = FTPConnect(
+    "alisonjoe.tpddns.cn",
+    user: "alisonjoe",
+    pass: "Homeisu&me",
+    showLog: true,
+  );
 
-  static Future<List<String>> loadDirectory(String host, int port, String username, String password, String directoryPath) async {
+  ///an auxiliary function that manage showed log to UI
+  Future<void> _log(String log) async {
     if (kDebugMode) {
-      print('loadDirectory begin...');
+      print(log);
     }
+    await Future.delayed(const Duration(seconds: 1));
+  }
+
+  Future<List<String>> loadDirectory(String directoryPath) async {
     try {
-      if (kDebugMode) {
-        print("loadDirectory begin $host, $port, $username, $password, $directoryPath");
-      }
-      // 连接到 FTP 服务器
-      if (socket == null || socket!.closed) {
-        // 如果套接字为空或已关闭，则重新连接
-        socket = await Socket.connect(host, port);
-        if (kDebugMode) {
-          print('Connected to FTP server');
-        }
-      }
-
-
-      // 登录到 FTP 服务器
-      await _sendCommand(socket, 'USER $username');
-      await _readResponse(socket);
-      await _sendCommand(socket, 'PASS $password');
-      await _readResponse(socket);
-      if (kDebugMode) {
-        print('Logged in to FTP server');
-      }
+      await _log('Connecting to FTP ...');
+      await _ftpConnect.connect();
 
       // 切换到指定目录
-      await _sendCommand(socket, 'CD $directoryPath');
-      await _readResponse(socket);
-      if (kDebugMode) {
-        print("_sendCommand CWD $directoryPath");
-      }
+      await _log('Changing directory to $directoryPath ...');
+      await _ftpConnect.changeDirectory(directoryPath);
 
       // 列出目录内容
-      await _sendCommand(socket, 'DIR');
-      String directoryListing = (await _readResponse(socket)) as String;
+      await _log('Listing directory content ...');
+      List<FTPEntry> ftpEntries = await _ftpConnect.listDirectoryContent();
 
-      // 解析目录内容并返回
-      List<String> fileList = directoryListing.trim().split('\r\n');
-      // 重置套接字为非阻塞模式
-      socket.setOption(SocketOption.tcpNoDelay, true);
+      // 将 FTPEntry 对象转换为文件名的列表
+      List<String> directoryContents = ftpEntries.map((entry) => entry.name).toList();
 
-      if (kDebugMode) {
-        print('Directory listing received');
-        print(directoryListing);
-      }
-
-      return fileList;
+      await _log('Directory listing received');
+      return directoryContents;
     } catch (e) {
-      if (kDebugMode) {
-        print('Error: $e');
-      }
+      await _log('Error: ${e.toString()}');
       return [];
+    } finally {
+      // 关闭连接
+      await _log('Disconnecting from FTP ...');
+      await _ftpConnect.disconnect();
     }
-  }
-
-  static Future<void> _sendCommand(Socket socket, String command) async {
-    if (kDebugMode) {
-      print('Sending command: $command');
-    }
-    socket.writeln(command);
-    await socket.flush();
-  }
-
-  static Future<List<String>> _readResponse(Socket socket) async {
-    List<String> responseLines = [];
-    try {
-      await socket.listen((data) {
-        var line = utf8.decode(data);
-        if (kDebugMode) {
-          print("Received response line: $line");
-        }
-        responseLines.add(line);
-        if (line.endsWith('\r\n')) {
-          // 结束监听
-          socket.close();
-        }
-      }).asFuture();
-    } on StateError catch (e) {
-      // 如果发生了流已经被监听的错误，我们可以忽略它
-      if (kDebugMode) {
-        print("Error: $e");
-      }
-    }
-    if (kDebugMode) {
-      print('Complete response: $responseLines');
-    }
-    return responseLines;
   }
 }
