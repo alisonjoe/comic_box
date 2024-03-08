@@ -43,6 +43,9 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
   }
 
   void _handleTabSelection() {
+    if (kDebugMode) {
+      print('Tab index: ${_tabController.index}');
+    }
     if (_tabController.index == 1) { // 当点击了第二个选项卡时，加载目录内容
       if(kDebugMode) {
         print("select index");
@@ -53,7 +56,8 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 
   // 加载目录内容
   Future<void> _loadDirectory() async {
-    final List<String> directoryContents = await DirectoryLoader.loadDirectory("./");
+    DirectoryLoader directoryLoader = DirectoryLoader();
+    final List<String> directoryContents = await directoryLoader.loadDirectory("./");
     setState(() {
       _directoryContents = directoryContents;
     });
