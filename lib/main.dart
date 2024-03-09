@@ -34,6 +34,9 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   List<String> _directoryContents = []; // 存储目录内容
+  final DirectoryLoader _directoryLoader = DirectoryLoader(); // 创建一个单独的DirectoryLoader实例
+  bool _directoryLoaded = false; // 标志是否已加载目录内容
+
 
   @override
   void initState() {
@@ -44,9 +47,9 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 
   void _handleTabSelection() {
     if (kDebugMode) {
-      print('Tab index: ${_tabController.index}');
+      print('Tab index: ${_tabController.index} flag: $_directoryLoaded');
     }
-    if (_tabController.index == 1) { // 当点击了第二个选项卡时，加载目录内容
+    if (_tabController.index == 1 && !_directoryLoaded) { // 当点击了第二个选项卡时，加载目录内容
       if(kDebugMode) {
         print("select index");
       }
@@ -56,11 +59,23 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 
   // 加载目录内容
   Future<void> _loadDirectory() async {
-    DirectoryLoader directoryLoader = DirectoryLoader();
-    final List<String> directoryContents = await directoryLoader.loadDirectory("./");
-    setState(() {
-      _directoryContents = directoryContents;
-    });
+    if(kDebugMode) {
+      print("_loadDirectory ....");
+    }
+    try {
+      final List<String> directoryContents = await _directoryLoader.loadDirectory("./");
+      if(kDebugMode) {
+        print("========_loadDirectory ....");
+      }
+      setState(() {
+        _directoryContents = directoryContents;
+        _directoryLoaded = true; // 设置目录已加载标志为true
+      });
+    } catch (e, stackTrace) {
+      if (kDebugMode) {
+        print("Error occurred in _loadDirectory: $e\n$stackTrace");
+      }
+    }
   }
 
   @override
