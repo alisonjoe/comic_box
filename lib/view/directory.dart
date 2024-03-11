@@ -31,7 +31,7 @@ class DirectoryLoader {
       }
       // 如果Socket为空或已关闭，则创建一个新的Socket
       try {
-        _socket = await Socket.connect('119.136.115.252', 21000); // 使用正确的主机和端口
+        _socket = await Socket.connect("113.110.164.38", 21000); // 使用正确的主机和端口
       } catch (e) {
         // 连接失败，抛出异常
         throw Exception('Failed to connect to FTP server: $e');
@@ -44,46 +44,65 @@ class DirectoryLoader {
   }
 
   Future<List<String>> sendAndHandleCommand(Socket socket, String message) async {
-    // 发送消息
     try {
+      // 发送消息
       socket.writeln(message);
+      if (kDebugMode) {
+        print("writeln succ: $message");
+      }
+
+      // 定义一个Completer来控制异步处理完成
+      Completer<List<String>> completer = Completer<List<String>>();
+
+      _subscription?.cancel(); // 取消之前的监听器
+
+      // 接收消息反馈
+      List<String> responseLines = [];
+      _subscription = socket.listen((List<int> bytes) {
+        String responseString = utf8.decode(bytes);
+        if (kDebugMode) {
+          print("=================responseString:$responseString");
+        }
+        List<String> lines = responseString.split('\r\n');
+        if (kDebugMode) {
+          print("=================lines:$lines");
+        }
+        for (String line in lines) {
+          if (line.trim().isNotEmpty) {
+            responseLines.add(line.trim());
+            if (kDebugMode) {
+              print("Received response: $line");
+            }
+          }
+        }
+      }, onError: (error) {
+        // 处理错误情况
+        if (kDebugMode) {
+          print("Error occurred during listening: $error");
+        }
+        completer.completeError(error); // 将异常传递给Completer
+      }, onDone: () {
+        // 当流关闭时，表示响应接收完成
+        if (kDebugMode) {
+          print("=========== onDone.");
+        }
+        completer.complete(responseLines);
+      });
+
+      if (kDebugMode) {
+        print("============= return: ${await completer.future}");
+      }
+      // 返回Completer的Future
+      return completer.future;
     } catch (e) {
-      throw Exception("Failed to writeln $message");
+      // 处理异常
+      throw Exception("Failed to handle command: $e");
     }
-    if (kDebugMode) {
-      print("writeln succ: $message");
-    }
-
-    // 定义一个Completer来控制异步处理完成
-    Completer<List<String>> completer = Completer<List<String>>();
-
-    _subscription?.cancel(); // 取消之前的监听器
-
-    // 接收消息反馈
-    List<String> responseLines = [];
-    _subscription = socket.listen((List<int> bytes) {
-      String responseString = utf8.decode(bytes);
-      responseLines.addAll(responseString.split('\n'));
-      if (kDebugMode) {
-        print("Received response: $responseLines");
-      }
-    }, onError: (error) {
-      // 处理错误情况
-      if (kDebugMode) {
-        print("Error occurred during listening: $error");
-      }
-      completer.completeError(error); // 将异常传递给Completer
-    }, onDone: () {
-      // 当监听完成时，将收到的字节串传递给Completer完成异步处理
-      completer.complete(responseLines);
-    });
-
-    // 返回Completer的Future
-    if (kDebugMode) {
-      print("completer: ${ await completer.future}");
-    }
-    return completer.future;
   }
+
+
+
+
 
   Future<List<String>> loadDirectory(String directoryPath) async {
     if (kDebugMode) {
@@ -97,10 +116,9 @@ class DirectoryLoader {
       print("==========loadDirectory step 1.");
     }
     // 发送用户名和密码
-    // sendCommand(socket, 'USER alisonjoe');
     List<String> response = await sendAndHandleCommand(socket, "USER alisonjoe");
     if (kDebugMode) {
-      print("==========loadDirectory step 2.");
+      print("==========loadDirectory step 1 response:$response, next step 2.");
     }
 
     if (kDebugMode) {
