@@ -6,18 +6,18 @@ class FTPReply {
 
   FTPReply(this._code, this._messages);
 
-  get code => _code;
+  get code => this._code;
 
-  get message => _messages;
+  get message => this._messages;
 
   bool isSuccessCode() {
-    int aux = _code - 200;
+    int aux = this._code - 200;
     return aux >= 0 && aux < 100;
   }
 
   @override
   String toString() {
-    StringBuffer buffer = StringBuffer();
+    StringBuffer buffer = new StringBuffer();
     buffer.write("FTPReply =  [code= $_code, message= $_messages]");
     return buffer.toString();
   }
