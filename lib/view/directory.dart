@@ -17,8 +17,8 @@ class DirectoryLoader {
   StreamSubscription? _subscription;
 
   Future<List<String>> loadDirectory(String directoryPath) async {
-    // final FTPConnect ftpClient = FTPConnect("113.110.167.133",
-    //     port: 21000, user: "alisonjoe", pass: "Homeisu&me");
+    // final FTPConnect ftpClient = FTPConnect("xxxx",
+    //     port: 21000, user: "alioe", pass: "xxxx");
     // if (kDebugMode) {
     //   print("========loadDirectory begin...");
     // }

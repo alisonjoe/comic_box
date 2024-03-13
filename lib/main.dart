@@ -30,10 +30,10 @@ class _MyHomePageState extends State<MyHomePage>
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
     _tabController.addListener(_handleTabSelection);
-    String host = "113.110.167.133";
-    int port = 21000;
-    String user = "alisonjoe";
-    String pass = "Homeisu&me";
+    String host = "113.xxx.xxx.133";
+    int port = 21;
+    String user = "alxxx";
+    String pass = "xxxx";
     _directoryLoader = DirectoryLoader(host, port, user, pass);
   }
 
