@@ -24,6 +24,14 @@ class DirectoryItem extends StatelessWidget {
   const DirectoryItem({Key? key, required this.itemName}) : super(key: key);
 
   Future<List<String>> loadDirectory(String directoryPath) async {
+    // 连接到FTP服务器
+    _ftpClient = FTPConnect(_host, port: _port, user: _user, pass: _pass);
+    await _ftpClient.connect();
+    if (kDebugMode) {
+      print("==========loadDirectory step 1.");
+    }
+    List<FTPEntry> listDir = await _ftpClient.listDirectoryContent();
+
     List<String> filePaths = [];
     // 将域名解析为 IP 地址
     alterShowToast("loadDirectory begin lookup $_host");
