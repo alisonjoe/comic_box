@@ -35,6 +35,8 @@ dependencies:
   path: ^1.9.0
   ftpconnect: ^2.0.7
   gbk_codec: ^0.4.0
+  fluttertoast: ^8.2.4
+  dnsolve: ^1.0.0
 
 
 

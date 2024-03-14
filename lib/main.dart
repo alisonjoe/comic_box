@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:dnsolve/dnsolve.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'view/directory.dart'; // 导入 directory.dart 文件
@@ -30,10 +33,10 @@ class _MyHomePageState extends State<MyHomePage>
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
     _tabController.addListener(_handleTabSelection);
-    String host = "113.110.167.133";
-    int port = 21000;
-    String user = "alisonjoe";
-    String pass = "Homeisu&me";
+    String host = "xxx.cn";
+    int port = 21;
+    String user = "axxx";
+    String pass = "xxx";
     _directoryLoader = DirectoryLoader(host, port, user, pass);
   }
 
@@ -122,7 +125,7 @@ class _MyHomePageState extends State<MyHomePage>
 }
 
 
-void main() {
+Future<void> main() async {
   runApp(const MyApp());
 }
 
