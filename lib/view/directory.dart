@@ -1,31 +1,20 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:comic_box/view/storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:comic_box/common/toast.dart';
 import 'package:comic_box/ftp/ftpconnect.dart';
 
-class DirectoryItem extends StatelessWidget {
-  final String itemName;
-  late final String _host;
-  late final int _port;
-  late final String _user;
-  late final String _pass;
+class DirectoryLoader extends StatelessWidget {
+  final ServerConfig config;
   late final FTPConnect _ftpClient;
-  late final String _address;
-  DirectoryLoader(String host, int port, String user, String pass):
-  const DirectoryItem({Key? key, required this.itemName}) : super(key: key);
-   _host = host, _port = port, _user = user, _pass = pass {
-    if (kDebugMode) {
-      print("===========DirectoryLoader init");
-    }
-  }
+  const DirectoryLoader({super.key, required this.config});
 
-  const DirectoryItem({Key? key, required this.itemName}) : super(key: key);
 
-  Future<List<String>> loadDirectory(String directoryPath) async {
+  Future<List<String>> loadDirectory() async {
     // 连接到FTP服务器
-    _ftpClient = FTPConnect(_host, port: _port, user: _user, pass: _pass);
+    _ftpClient = FTPConnect(config.host, port: config.port, user: config.user, pass: config.pass);
     await _ftpClient.connect();
     if (kDebugMode) {
       print("==========loadDirectory step 1.");
@@ -81,11 +70,11 @@ class DirectoryItem extends StatelessWidget {
       onTap: () {
         // 处理点击事件，例如导航到特定页面或执行其他操作
         if (kDebugMode) {
-          print('Clicked on $itemName');
+          print('Clicked on index');
         }
       },
       child: ListTile(
-        title: Text(itemName),
+        title: Text('test'),
       ),
     );
   }
