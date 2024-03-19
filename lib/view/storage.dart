@@ -20,10 +20,10 @@ class ServerConfig {
 List<ServerConfig> serverConfigs = [
   ServerConfig(
     title: "xnas",
-    host: 'xxxx',
-    port: 21,
-    user: 'xxx',
-    pass: 'xxxx',
+    host: 'alisonjoe.tpddns.cn',
+    port: 21000,
+    user: 'alisonjoe',
+    pass: 'Homeisu&me',
   ),
   // 其他服务器配置...
 ];

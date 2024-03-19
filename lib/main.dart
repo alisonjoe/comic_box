@@ -17,7 +17,8 @@ class _MyHomePageState extends State<MyHomePage>
     with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   late TabController _tabController;
   List<String> _directoryContents = []; // 存储目录内容
-  late final DirectoryLoader _directoryLoader;
+  late DirectoryLoader _directoryLoader; // 声明_directoryLoader字段
+
 
   bool _directoryLoaded = false; // 标志是否已加载目录内容
 
@@ -28,11 +29,13 @@ class _MyHomePageState extends State<MyHomePage>
     }
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    _tabController.addListener(_handleTabSelection);
+    _directoryLoader = DirectoryLoader(config: serverConfigs[0]); // 初始化_directoryLoader字段
+    // _tabController.addListener(_handleTabSelection);
   }
 
   void _handleTabSelection() {
     if (_tabController.index == 1 && !_directoryLoaded) {
+      _directoryLoader = DirectoryLoader(config: serverConfigs[0]);
       _loadDirectory();
     }
   }
@@ -89,20 +92,38 @@ class _MyHomePageState extends State<MyHomePage>
             );
           },
         ),
-        ListView.builder(
-          itemCount: _directoryContents.length,
-          itemBuilder: (context, index) {
-            return GestureDetector(
-              onTap: () {
-                // 处理点击事件，例如导航到特定页面或执行其他操作
-                if (kDebugMode) {
-                  print('Clicked on ${_directoryContents[index]}');
-                }
-              },
-              child: ListTile(
-                title: Text(_directoryContents[index]),
-              ),
-            );
+        // 第二个Tab对应的页面
+        FutureBuilder(
+          future: _loadDirectory(), // 执行加载目录内容的方法
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              // 加载中，显示加载指示器
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              // 加载出错，显示错误信息
+              if (kDebugMode) {
+                print("Error: ${snapshot.error}");
+              }
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else {
+              // 加载完成，显示目录内容
+              return ListView.builder(
+                itemCount: _directoryContents.length,
+                itemBuilder: (context, index) {
+                  return GestureDetector(
+                    onTap: () {
+                      // 处理点击事件，例如导航到特定页面或执行其他操作
+                      if (kDebugMode) {
+                        print('Clicked on ${_directoryContents[index]}');
+                      }
+                    },
+                    child: ListTile(
+                      title: Text(_directoryContents[index]),
+                    ),
+                  );
+                },
+              );
+            }
           },
         ),
         const Center(child: Text('最近观看内容')),

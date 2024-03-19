@@ -9,7 +9,8 @@ import 'package:comic_box/ftp/ftpconnect.dart';
 class DirectoryLoader extends StatelessWidget {
   final ServerConfig config;
   late final FTPConnect _ftpClient;
-  const DirectoryLoader({super.key, required this.config});
+  late final String _address;
+  DirectoryLoader({super.key, required this.config});
 
 
   Future<List<String>> loadDirectory() async {
@@ -23,17 +24,17 @@ class DirectoryLoader extends StatelessWidget {
 
     List<String> filePaths = [];
     // 将域名解析为 IP 地址
-    alterShowToast("loadDirectory begin lookup $_host");
+    alterShowToast("loadDirectory begin lookup ${config.host}");
     try {
-      List<InternetAddress> addresses = await InternetAddress.lookup(_host,
+      List<InternetAddress> addresses = await InternetAddress.lookup(config.host,
           type: InternetAddressType.any);
       alterShowToast("InternetAddress baidu: $addresses");
       if (addresses.isEmpty) {
-        alterShowToast("$_host lookup fail");
+        alterShowToast("${config.host} lookup fail");
         if (kDebugMode) {
-          print("$_host lookup fail");
+          print("${config.host} lookup fail");
         }
-        throw Exception('Failed to resolve host: $_host');
+        throw Exception('Failed to resolve host: ${config.host}');
       }
       InternetAddress address = addresses.first;
       _address = address.address;
@@ -45,7 +46,7 @@ class DirectoryLoader extends StatelessWidget {
       return [];
     }
     // 连接到FTP服务器
-    _ftpClient = FTPConnect(_address, port: _port, user: _user, pass: _pass);
+    _ftpClient = FTPConnect(_address, port: config.port, user: config.user, pass: config.pass);
     try {
       bool connected = await _ftpClient.connect();
       if (kDebugMode) {
