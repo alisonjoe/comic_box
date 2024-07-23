@@ -15,14 +15,14 @@ class DirectoryLoader {
     _ftpClient = FTPConnect(config.host, port: config.port, user: config.user, pass: config.pass);
   }
 
-  Future<List<String>> loadDirectory([String directoryPath = '']) async {
-    List<String> filePaths = [];
+  Future<List<FTPEntry>> loadDirectory([String directoryPath = '']) async {
+    List<FTPEntry> entries = [];
 
     try {
       // 将域名解析为 IP 地址
       alterShowToast("loadDirectory begin lookup ${config.host}");
       List<InternetAddress> addresses = await InternetAddress.lookup(config.host, type: InternetAddressType.any);
-      alterShowToast("InternetAddress baidu: $addresses");
+      alterShowToast("InternetAddress: $addresses");
       if (addresses.isEmpty) {
         alterShowToast("${config.host} lookup fail");
         if (kDebugMode) {
@@ -46,12 +46,9 @@ class DirectoryLoader {
       }
 
       List<FTPEntry> listDir = await _ftpClient.listDirectoryContent();
+      entries.addAll(listDir);
 
-      for (FTPEntry dir in listDir) {
-        filePaths.add(dir.name);
-      }
-
-      return filePaths;
+      return entries;
     } catch (e) {
       if (kDebugMode) {
         print(e.toString());

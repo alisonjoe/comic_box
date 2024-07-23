@@ -1,24 +1,26 @@
-import 'package:comic_box/view/storage.dart';
-import 'package:flutter/foundation.dart';
+import 'dart:async';
+import 'dart:io';
+import 'package:comic_box/view/image.dart';
 import 'package:flutter/material.dart';
-import 'common/toast.dart';
+import 'package:flutter/foundation.dart';
+import 'package:comic_box/common/toast.dart';
+import 'package:comic_box/ftp/ftpconnect.dart';
+import 'package:comic_box/view/storage.dart';
 import 'view/directory.dart'; // 导入 directory.dart 文件
 
-
-Future<void> main() async {
+void main() {
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: '漫画箱',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+        primarySwatch: Colors.blue,
       ),
       home: const MyHomePage(title: '漫画箱'),
     );
@@ -28,7 +30,7 @@ class MyApp extends StatelessWidget {
 class MyHomePage extends StatefulWidget {
   final String title;
 
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
+  const MyHomePage({super.key, required this.title});
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
@@ -36,7 +38,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  List<String> _directoryContents = [];
+  List<FTPEntry> _directoryContents = [];
   DirectoryLoader? _directoryLoader;
   bool _directoryLoaded = false;
   String _currentDirectory = '';
@@ -54,7 +56,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 
   Future<void> _loadDirectory([String directoryPath = '']) async {
     try {
-      List<String> contents = await _directoryLoader!.loadDirectory(directoryPath);
+      List<FTPEntry> contents = await _directoryLoader!.loadDirectory(directoryPath);
       setState(() {
         _directoryContents = contents;
         _directoryLoaded = true;
@@ -89,6 +91,44 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
     }
   }
 
+  Widget _buildFileLeadingIcon(FTPEntry entry) {
+    if (entry.type == FTPEntryType.FILE) {
+      if (entry.name.endsWith('.jpg') || entry.name.endsWith('.jpeg') || entry.name.endsWith('.png')) {
+        // 假设 entry.link 是图片文件的 URL
+        String imagePath = 'ftp://${_directoryLoader!.config.host}${_currentDirectory.isEmpty ? '' : '/$_currentDirectory'}/${entry.name}';
+        return Image.network(
+          imagePath,
+          width: 40,
+          height: 40,
+          fit: BoxFit.cover,
+        );
+      } else {
+        return const Icon(Icons.insert_drive_file);
+      }
+    } else {
+      return const Icon(Icons.folder);
+    }
+  }
+
+  void _onFileTap(FTPEntry entry) {
+    if (entry.type == FTPEntryType.FILE) {
+      if (entry.name.endsWith('.jpg') || entry.name.endsWith('.jpeg') || entry.name.endsWith('.png')) {
+        String imagePath = 'ftp://${_directoryLoader!.config.host}${_currentDirectory.isEmpty ? '' : '/$_currentDirectory'}/${entry.name}';
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ImageViewer(imageUrl: imagePath),
+          ),
+        );
+      } else {
+        alterShowToast('无法跳转到文件: ${entry.name}');
+      }
+    } else {
+      String newDirectory = _currentDirectory.isEmpty ? entry.name : '$_currentDirectory/${entry.name}';
+      _loadDirectory(newDirectory);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -118,7 +158,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
               );
             },
           ),
-          FutureBuilder<List<String>>(
+          FutureBuilder<List<FTPEntry>>(
             future: _directoryLoader?.loadDirectory(_currentDirectory), // 调用 _directoryLoader 加载目录
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -132,7 +172,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
                 _directoryContents = snapshot.data ?? [];
                 return Column(
                   children: [
-                    // 固定导航栏
+                    // 固定导航栏，提供返回上层目录的功能
                     ListTile(
                       leading: const Icon(Icons.arrow_upward),
                       title: const Text('上层目录'),
@@ -142,19 +182,12 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
                       child: ListView.builder(
                         itemCount: _directoryContents.length,
                         itemBuilder: (context, index) {
+                          FTPEntry entry = _directoryContents[index];
                           return GestureDetector(
-                            onTap: () {
-                              String selectedDirectory = _directoryContents[index];
-                              if (kDebugMode) {
-                                print('Clicked on $selectedDirectory');
-                              }
-                              String newDirectory = _currentDirectory.isEmpty
-                                  ? selectedDirectory
-                                  : '$_currentDirectory/$selectedDirectory';
-                              _loadDirectory(newDirectory); // 进入点击的目录
-                            },
+                            onTap: () => _onFileTap(entry),
                             child: ListTile(
-                              title: Text(_directoryContents[index]),
+                              title: Text(entry.name),
+                              leading: _buildFileLeadingIcon(entry),
                             ),
                           );
                         },
@@ -173,4 +206,3 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
     );
   }
 }
-
